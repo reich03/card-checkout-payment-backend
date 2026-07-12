@@ -1,0 +1,59 @@
+service: greenpay-reconciler
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: ${opt:region, 'us-east-1'}
+  stage: ${opt:stage, 'dev'}
+  memorySize: 256
+  timeout: 30
+  environment:
+    DYNAMODB_TABLE_PRODUCTS: ${env:DYNAMODB_TABLE_PRODUCTS, 'Products'}
+    DYNAMODB_TABLE_TRANSACTIONS: ${env:DYNAMODB_TABLE_TRANSACTIONS, 'Transactions'}
+    PAYMENT_API_BASE_URL: ${env:PAYMENT_API_BASE_URL}
+    PAYMENT_API_PUBLIC_KEY: ${env:PAYMENT_API_PUBLIC_KEY}
+    PAYMENT_API_PRIVATE_KEY: ${env:PAYMENT_API_PRIVATE_KEY}
+    PAYMENT_API_INTEGRITY_KEY: ${env:PAYMENT_API_INTEGRITY_KEY}
+    PAYMENT_API_EVENTS_KEY: ${env:PAYMENT_API_EVENTS_KEY}
+    RECONCILE_OLDER_THAN_MINUTES: ${env:RECONCILE_OLDER_THAN_MINUTES, '3'}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:Query
+          Resource:
+            - arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMODB_TABLE_PRODUCTS, 'Products'}
+            - arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMODB_TABLE_TRANSACTIONS, 'Transactions'}
+            - arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMODB_TABLE_TRANSACTIONS, 'Transactions'}/index/*
+
+package:
+  individually: true
+  patterns:
+    - '!**'
+    - 'dist/**'
+
+functions:
+  reconcile:
+    handler: dist/reconcile.handler
+    description: Reconcile PENDING transactions older than 3 minutes
+    events:
+      - schedule:
+          rate: rate(5 minutes)
+          enabled: true
+          description: GreenPay pending transaction reconciler
+
+  webhook:
+    handler: dist/webhook.handler
+    description: Wompi payment webhook (transaction.updated)
+    events:
+      - httpApi:
+          path: /webhooks/wompi
+          method: post
+
+plugins: []

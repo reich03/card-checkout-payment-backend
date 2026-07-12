@@ -1,5 +1,11 @@
 export { generateIntegritySignature } from './integrity-signature';
 export {
+  computeWebhookChecksum,
+  isValidWebhookSignature,
+  readWebhookProperty,
+  type WompiWebhookEvent,
+} from './webhook-signature';
+export {
   loadPaymentGatewayConfig,
   type PaymentGatewayConfig,
 } from './payment-gateway.config';
