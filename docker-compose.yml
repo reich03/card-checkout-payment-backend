@@ -1,0 +1,17 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - DYNAMODB_TABLE_PRODUCTS=${DYNAMODB_TABLE_PRODUCTS:-Products}
+      - DYNAMODB_TABLE_TRANSACTIONS=${DYNAMODB_TABLE_TRANSACTIONS:-Transactions}
+      - PAYMENT_API_BASE_URL=${PAYMENT_API_BASE_URL}
+      - PAYMENT_API_PUBLIC_KEY=${PAYMENT_API_PUBLIC_KEY}
+      - PAYMENT_API_PRIVATE_KEY=${PAYMENT_API_PRIVATE_KEY}
+      - PAYMENT_API_INTEGRITY_KEY=${PAYMENT_API_INTEGRITY_KEY}
+    restart: unless-stopped
