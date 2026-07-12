@@ -18,7 +18,9 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "seed:products": "ts-node -O '{\"module\":\"commonjs\"}' -r tsconfig-paths/register scripts/seed-products.ts"
+    "seed:products": "ts-node -O '{\"module\":\"commonjs\"}' -r tsconfig-paths/register scripts/seed-products.ts",
+    "lambda:build": "node lambda/esbuild.mjs",
+    "lambda:package": "npm run lambda:build"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.1085.0",
@@ -43,6 +45,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.0",
     "@types/supertest": "^7.0.0",
+    "esbuild": "^0.25.12",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
@@ -64,15 +67,22 @@
       "json",
       "ts"
     ],
-    "rootDir": "src",
+    "rootDir": ".",
+    "roots": [
+      "<rootDir>/src",
+      "<rootDir>/lambda"
+    ],
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "src/**/*.(t|j)s",
+      "lambda/**/*.(t|j)s",
+      "!lambda/esbuild.mjs",
+      "!lambda/dist/**"
     ],
-    "coverageDirectory": "../coverage",
+    "coverageDirectory": "./coverage",
     "testEnvironment": "node"
   }
 }
