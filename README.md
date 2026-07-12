@@ -8,6 +8,7 @@ REST API built with **NestJS 11** + **TypeScript** following **Hexagonal Archite
 |---|---|---|
 | NestJS | 11.x | API framework |
 | TypeScript | 5.x | Type-safe language |
+| Swagger | @nestjs/swagger | OpenAPI docs at `/api/docs` |
 | DynamoDB | - | NoSQL database (AWS) |
 | Jest | 29.x | Unit testing (>80% coverage) |
 | Docker | - | Containerization |
@@ -56,6 +57,8 @@ cp .env.example .env
 
 # Run in development
 npm run start:dev
+
+# Swagger UI → http://localhost:3000/api/docs
 
 # Run tests
 npm run test
