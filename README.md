@@ -79,6 +79,12 @@ docker run -p 3000:3000 --env-file .env checkout-api
 docker-compose up
 ```
 
+### Seed products (DynamoDB)
+```bash
+# Requires AWS credentials and Products table
+npm run seed:products
+```
+
 ## Test Coverage
 
 > Coverage results will be added here after implementation.
