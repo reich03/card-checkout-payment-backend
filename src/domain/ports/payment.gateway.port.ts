@@ -12,7 +12,6 @@ export interface CreatePaymentInput {
   paymentToken: string;
   installments: number;
   reference: string;
-  integritySignature: string;
 }
 
 export interface PaymentResult {
