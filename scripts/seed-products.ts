@@ -1,7 +1,6 @@
 import { config } from 'dotenv';
 import { resolve } from 'path';
 
-// Seed runs outside Nest — load backend/.env explicitly.
 config({ path: resolve(__dirname, '../.env') });
 
 import { seedProducts } from '../src/infrastructure/database/seed-products';
