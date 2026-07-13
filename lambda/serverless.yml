@@ -17,6 +17,7 @@ provider:
     PAYMENT_API_PRIVATE_KEY: ${env:PAYMENT_API_PRIVATE_KEY}
     PAYMENT_API_INTEGRITY_KEY: ${env:PAYMENT_API_INTEGRITY_KEY}
     PAYMENT_API_EVENTS_KEY: ${env:PAYMENT_API_EVENTS_KEY}
+    # 0 = pick up PENDING immediately (mobile refresh + webhook still preferred)
     RECONCILE_OLDER_THAN_MINUTES: ${env:RECONCILE_OLDER_THAN_MINUTES, '0'}
   iam:
     role:
@@ -32,6 +33,10 @@ provider:
             - arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMODB_TABLE_TRANSACTIONS, 'Transactions'}
             - arn:aws:dynamodb:${self:provider.region}:*:table/${env:DYNAMODB_TABLE_TRANSACTIONS, 'Transactions'}/index/*
 
+custom:
+  # Optional: set ALARM_EMAIL before deploy to get SNS email alerts (confirm the subscription).
+  alarmEmail: ${env:ALARM_EMAIL, ''}
+
 package:
   individually: true
   patterns:
@@ -41,6 +46,7 @@ package:
 functions:
   reconcile:
     handler: dist/reconcile.handler
+    # EventBridge min is 1m; handler waits 30s and runs a second pass (~every 30s)
     timeout: 60
     description: Reconcile PENDING txs (~every 30s via 1m schedule + mid-minute pass)
     events:
@@ -56,5 +62,73 @@ functions:
       - httpApi:
           path: /webhooks/wompi
           method: post
+
+resources:
+  Conditions:
+    HasAlarmEmail:
+      Fn::Not:
+        - Fn::Equals:
+            - ${self:custom.alarmEmail}
+            - ''
+
+  Resources:
+    LambdaAlarmTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: ${self:service}-${self:provider.stage}-alarms
+        DisplayName: GreenPay Lambda alarms
+
+    LambdaAlarmEmailSubscription:
+      Type: AWS::SNS::Subscription
+      Condition: HasAlarmEmail
+      Properties:
+        Protocol: email
+        TopicArn:
+          Ref: LambdaAlarmTopic
+        Endpoint: ${self:custom.alarmEmail}
+
+    ReconcileErrorsAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmName: ${self:service}-${self:provider.stage}-reconcile-errors
+        AlarmDescription: Reconcile Lambda Errors > 3 in 5 minutes
+        Namespace: AWS/Lambda
+        MetricName: Errors
+        Dimensions:
+          - Name: FunctionName
+            Value:
+              Ref: ReconcileLambdaFunction
+        Statistic: Sum
+        Period: 300
+        EvaluationPeriods: 1
+        Threshold: 3
+        ComparisonOperator: GreaterThanThreshold
+        TreatMissingData: notBreaching
+        AlarmActions:
+          - Ref: LambdaAlarmTopic
+        OKActions:
+          - Ref: LambdaAlarmTopic
+
+    WebhookErrorsAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Properties:
+        AlarmName: ${self:service}-${self:provider.stage}-webhook-errors
+        AlarmDescription: Webhook Lambda Errors > 3 in 5 minutes
+        Namespace: AWS/Lambda
+        MetricName: Errors
+        Dimensions:
+          - Name: FunctionName
+            Value:
+              Ref: WebhookLambdaFunction
+        Statistic: Sum
+        Period: 300
+        EvaluationPeriods: 1
+        Threshold: 3
+        ComparisonOperator: GreaterThanThreshold
+        TreatMissingData: notBreaching
+        AlarmActions:
+          - Ref: LambdaAlarmTopic
+        OKActions:
+          - Ref: LambdaAlarmTopic
 
 plugins: []
