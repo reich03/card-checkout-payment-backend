@@ -27,3 +27,12 @@ export class PaymentProcessingError extends Error {
     this.name = 'PaymentProcessingError';
   }
 }
+
+export class ReceiptNotAvailableError extends Error {
+  constructor(transactionId: string, status: string) {
+    super(
+      `Receipt is only available for APPROVED transactions (id=${transactionId}, status=${status})`,
+    );
+    this.name = 'ReceiptNotAvailableError';
+  }
+}

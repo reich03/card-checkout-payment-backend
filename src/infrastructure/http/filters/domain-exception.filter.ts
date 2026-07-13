@@ -10,6 +10,7 @@ import {
   InsufficientStockError,
   PaymentProcessingError,
   ProductNotFoundError,
+  ReceiptNotAvailableError,
   TransactionNotFoundError,
 } from '../../../application/errors/application.errors';
 import { PaymentGatewayHttpError } from '../../payment/payment-gateway.adapter';
@@ -42,6 +43,11 @@ export class DomainExceptionFilter implements ExceptionFilter {
 
     if (exception instanceof TransactionNotFoundError) {
       this.send(response, HttpStatus.NOT_FOUND, exception.message);
+      return;
+    }
+
+    if (exception instanceof ReceiptNotAvailableError) {
+      this.send(response, HttpStatus.CONFLICT, exception.message);
       return;
     }
 
