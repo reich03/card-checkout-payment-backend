@@ -85,6 +85,19 @@ docker-compose up
 npm run seed:products
 ```
 
+## AWS deployment
+
+Live API (Ohio): see [`docs/aws-setup.md`](./docs/aws-setup.md) for EC2, DynamoDB, Lambda, and GitHub Actions secrets.
+
+```bash
+# Manual redeploy from your Mac
+rsync -avz --exclude node_modules --exclude dist --exclude coverage \
+  -e "ssh -i ~/Downloads/greenpay-ec2.pem" \
+  ./ ec2-user@18.224.46.220:~/backend/
+ssh -i ~/Downloads/greenpay-ec2.pem ec2-user@18.224.46.220 \
+  'cd ~/backend && docker compose up -d --build'
+```
+
 ## Test Coverage
 
 > Coverage results will be added here after implementation.

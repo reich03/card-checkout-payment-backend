@@ -1,0 +1,60 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [production, main]
+  pull_request:
+    branches: [production, main]
+
+jobs:
+  ci:
+    name: Lint & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        continue-on-error: true
+        run: npm run lint
+
+      - name: Test
+        run: npx jest --watchman=false --ci
+
+  deploy:
+    name: Deploy API to EC2
+    needs: ci
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/production' || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2.pem
+          chmod 600 ~/.ssh/ec2.pem
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Rsync backend (keep remote .env)
+        run: |
+          rsync -az --delete \
+            --exclude node_modules \
+            --exclude dist \
+            --exclude coverage \
+            --exclude .env \
+            --exclude lambda/dist \
+            -e "ssh -i ~/.ssh/ec2.pem -o StrictHostKeyChecking=yes" \
+            ./ "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/backend/"
+
+      - name: Rebuild and restart containers
+        run: |
+          ssh -i ~/.ssh/ec2.pem "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" \
+            'cd ~/backend && docker compose up -d --build'

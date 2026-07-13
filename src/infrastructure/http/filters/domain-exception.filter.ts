@@ -25,11 +25,13 @@ export class DomainExceptionFilter implements ExceptionFilter {
     if (this.isHttpException(exception)) {
       const status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
-      response.status(status).json(
-        typeof exceptionResponse === 'string'
-          ? { statusCode: status, message: exceptionResponse }
-          : exceptionResponse,
-      );
+      response
+        .status(status)
+        .json(
+          typeof exceptionResponse === 'string'
+            ? { statusCode: status, message: exceptionResponse }
+            : exceptionResponse,
+        );
       return;
     }
 
@@ -76,12 +78,20 @@ export class DomainExceptionFilter implements ExceptionFilter {
       }
 
       this.logger.error(exception.message, exception.stack);
-      this.send(response, HttpStatus.INTERNAL_SERVER_ERROR, 'Internal server error');
+      this.send(
+        response,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+        'Internal server error',
+      );
       return;
     }
 
     this.logger.error('Unhandled non-error exception', exception as object);
-    this.send(response, HttpStatus.INTERNAL_SERVER_ERROR, 'Internal server error');
+    this.send(
+      response,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      'Internal server error',
+    );
   }
 
   private send(response: Response, statusCode: number, message: string): void {
@@ -92,9 +102,7 @@ export class DomainExceptionFilter implements ExceptionFilter {
     });
   }
 
-  private isHttpException(
-    exception: unknown,
-  ): exception is {
+  private isHttpException(exception: unknown): exception is {
     getStatus: () => number;
     getResponse: () => string | object;
   } {

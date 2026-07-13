@@ -1,9 +1,6 @@
 import { toProduct, toProductItem } from './product.mapper';
 import { Product } from '../../../domain/entities/product.entity';
-import {
-  toTransaction,
-  toTransactionItem,
-} from './transaction.mapper';
+import { toTransaction, toTransactionItem } from './transaction.mapper';
 import {
   Transaction,
   TransactionStatus,

@@ -65,7 +65,9 @@ export class Transaction {
         throw new Error('Transaction product id is required');
       }
       if (item.quantity <= 0) {
-        throw new Error('Transaction product quantity must be greater than zero');
+        throw new Error(
+          'Transaction product quantity must be greater than zero',
+        );
       }
       if (item.unitPrice < 0) {
         throw new Error('Transaction product unit price cannot be negative');
@@ -98,7 +100,10 @@ export class Transaction {
     this.updatedAt = updatedAt;
   }
 
-  decline(paymentRef: string | null = null, updatedAt: Date = new Date()): void {
+  decline(
+    paymentRef: string | null = null,
+    updatedAt: Date = new Date(),
+  ): void {
     this.ensurePending();
     this.status = TransactionStatus.DECLINED;
     this.paymentRef = paymentRef;

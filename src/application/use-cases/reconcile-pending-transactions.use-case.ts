@@ -25,9 +25,7 @@ export class ReconcilePendingTransactionsUseCase {
    * Finds PENDING transactions older than `olderThanMinutes` and resolves
    * each against the payment gateway.
    */
-  async execute(
-    olderThanMinutes: number = 3,
-  ): Promise<ReconcilePendingResult> {
+  async execute(olderThanMinutes: number = 3): Promise<ReconcilePendingResult> {
     const olderThan = new Date(Date.now() - olderThanMinutes * 60 * 1000);
     const pending =
       await this.transactionRepository.findPendingOlderThan(olderThan);

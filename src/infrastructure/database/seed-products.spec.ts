@@ -4,7 +4,9 @@ import { SEED_PRODUCTS, seedProducts } from './seed-products';
 
 describe('seedProducts', () => {
   it('saves all seed products through the repository', async () => {
-    const save = jest.fn().mockImplementation(async (product: Product) => product);
+    const save = jest
+      .fn()
+      .mockImplementation(async (product: Product) => product);
     const repository = { save } as unknown as DynamoProductRepository;
 
     await seedProducts(repository);

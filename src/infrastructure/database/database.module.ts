@@ -15,7 +15,9 @@ export const DYNAMODB_CLIENT = Symbol('DYNAMODB_CLIENT');
     {
       provide: DYNAMODB_CLIENT,
       useFactory: (config: ConfigService) =>
-        createDynamoDocumentClient(config.get<string>('AWS_REGION') ?? 'us-east-2'),
+        createDynamoDocumentClient(
+          config.get<string>('AWS_REGION') ?? 'us-east-2',
+        ),
       inject: [ConfigService],
     },
     {

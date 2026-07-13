@@ -38,26 +38,30 @@ describe('CreateTransactionUseCase', () => {
   const createMocks = () => {
     const productRepository = {
       findAll: jest.fn(),
-      findById: jest.fn().mockResolvedValue(
-        new Product(
-          product.id,
-          product.name,
-          product.description,
-          product.price,
-          product.stock,
-          product.imageUrl,
+      findById: jest
+        .fn()
+        .mockResolvedValue(
+          new Product(
+            product.id,
+            product.name,
+            product.description,
+            product.price,
+            product.stock,
+            product.imageUrl,
+          ),
         ),
-      ),
-      updateStock: jest.fn().mockImplementation(async (id: string, stock: number) => {
-        return new Product(
-          id,
-          product.name,
-          product.description,
-          product.price,
-          stock,
-          product.imageUrl,
-        );
-      }),
+      updateStock: jest
+        .fn()
+        .mockImplementation(async (id: string, stock: number) => {
+          return new Product(
+            id,
+            product.name,
+            product.description,
+            product.price,
+            stock,
+            product.imageUrl,
+          );
+        }),
     };
 
     const transactionRepository = {
@@ -85,12 +89,21 @@ describe('CreateTransactionUseCase', () => {
       paymentGateway,
     );
 
-    return { useCase, productRepository, transactionRepository, paymentGateway };
+    return {
+      useCase,
+      productRepository,
+      transactionRepository,
+      paymentGateway,
+    };
   };
 
   it('creates an approved transaction and decrements stock', async () => {
-    const { useCase, productRepository, transactionRepository, paymentGateway } =
-      createMocks();
+    const {
+      useCase,
+      productRepository,
+      transactionRepository,
+      paymentGateway,
+    } = createMocks();
 
     const result = await useCase.execute(dto);
 

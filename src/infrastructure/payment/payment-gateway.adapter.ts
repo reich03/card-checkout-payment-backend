@@ -197,7 +197,10 @@ export class PaymentGatewayAdapter implements IPaymentGateway {
 
       if (!response.ok) {
         throw new PaymentGatewayHttpError(
-          this.extractErrorMessage(payload, `Payment API error (${response.status})`),
+          this.extractErrorMessage(
+            payload,
+            `Payment API error (${response.status})`,
+          ),
           response.status,
           payload,
         );

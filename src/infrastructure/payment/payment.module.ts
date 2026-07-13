@@ -13,8 +13,12 @@ import { loadPaymentGatewayConfig } from '../payment/payment-gateway.config';
         const paymentConfig = loadPaymentGatewayConfig({
           PAYMENT_API_BASE_URL: config.get<string>('PAYMENT_API_BASE_URL'),
           PAYMENT_API_PUBLIC_KEY: config.get<string>('PAYMENT_API_PUBLIC_KEY'),
-          PAYMENT_API_PRIVATE_KEY: config.get<string>('PAYMENT_API_PRIVATE_KEY'),
-          PAYMENT_API_INTEGRITY_KEY: config.get<string>('PAYMENT_API_INTEGRITY_KEY'),
+          PAYMENT_API_PRIVATE_KEY: config.get<string>(
+            'PAYMENT_API_PRIVATE_KEY',
+          ),
+          PAYMENT_API_INTEGRITY_KEY: config.get<string>(
+            'PAYMENT_API_INTEGRITY_KEY',
+          ),
           PAYMENT_API_TIMEOUT_MS: config.get<string>('PAYMENT_API_TIMEOUT_MS'),
         });
 

@@ -1,10 +1,5 @@
 export type WompiTransactionStatus =
-  | 'APPROVED'
-  | 'DECLINED'
-  | 'PENDING'
-  | 'ERROR'
-  | 'VOIDED'
-  | 'PENDING_APPROVAL';
+  'APPROVED' | 'DECLINED' | 'PENDING' | 'ERROR' | 'VOIDED' | 'PENDING_APPROVAL';
 
 export interface WompiTokenResponse {
   status?: string;

@@ -22,9 +22,11 @@ describe('ResolveTransactionUseCase', () => {
   const createMocks = () => {
     const productRepository = {
       findAll: jest.fn(),
-      findById: jest.fn().mockResolvedValue(
-        new Product('prod-1', 'Kit', 'desc', 90000, 5, 'https://x'),
-      ),
+      findById: jest
+        .fn()
+        .mockResolvedValue(
+          new Product('prod-1', 'Kit', 'desc', 90000, 5, 'https://x'),
+        ),
       updateStock: jest.fn().mockImplementation(async (_id, stock) => {
         return new Product('prod-1', 'Kit', 'desc', 90000, stock, 'https://x');
       }),
@@ -49,7 +51,12 @@ describe('ResolveTransactionUseCase', () => {
       paymentGateway,
     );
 
-    return { useCase, productRepository, transactionRepository, paymentGateway };
+    return {
+      useCase,
+      productRepository,
+      transactionRepository,
+      paymentGateway,
+    };
   };
 
   it('approves pending transaction and decrements stock', async () => {

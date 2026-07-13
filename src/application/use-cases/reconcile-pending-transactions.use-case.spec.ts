@@ -21,12 +21,16 @@ describe('ReconcilePendingTransactionsUseCase', () => {
 
     const productRepository = {
       findAll: jest.fn(),
-      findById: jest.fn().mockResolvedValue(
-        new Product('prod-1', 'Item', 'd', 50000, 3, 'https://x'),
-      ),
-      updateStock: jest.fn().mockResolvedValue(
-        new Product('prod-1', 'Item', 'd', 50000, 2, 'https://x'),
-      ),
+      findById: jest
+        .fn()
+        .mockResolvedValue(
+          new Product('prod-1', 'Item', 'd', 50000, 3, 'https://x'),
+        ),
+      updateStock: jest
+        .fn()
+        .mockResolvedValue(
+          new Product('prod-1', 'Item', 'd', 50000, 2, 'https://x'),
+        ),
     };
 
     const transactionRepository = {

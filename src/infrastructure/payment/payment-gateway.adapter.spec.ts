@@ -178,7 +178,9 @@ describe('PaymentGatewayAdapter', () => {
     await expect(adapter.tokenizeCard(card)).rejects.toBeInstanceOf(
       PaymentGatewayHttpError,
     );
-    await expect(adapter.tokenizeCard(card)).rejects.toThrow('Invalid public key');
+    await expect(adapter.tokenizeCard(card)).rejects.toThrow(
+      'Invalid public key',
+    );
   });
 
   it('throws on timeout', async () => {

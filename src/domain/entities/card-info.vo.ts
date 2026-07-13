@@ -29,7 +29,9 @@ export class CardInfo {
       throw new Error('CVV must be 3 or 4 digits');
     }
     if (!Number.isInteger(this.installments) || this.installments < 1) {
-      throw new Error('Installments must be an integer greater than or equal to 1');
+      throw new Error(
+        'Installments must be an integer greater than or equal to 1',
+      );
     }
     if (this.isExpired()) {
       throw new Error('Card is expired');

@@ -1,9 +1,7 @@
 import { Transaction, TransactionStatus } from './transaction.entity';
 
 describe('Transaction', () => {
-  const products = [
-    { productId: 'prod-1', quantity: 2, unitPrice: 50000 },
-  ];
+  const products = [{ productId: 'prod-1', quantity: 2, unitPrice: 50000 }];
 
   it('creates a pending transaction via factory', () => {
     const transaction = Transaction.create({

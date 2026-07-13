@@ -66,7 +66,10 @@ export function isValidWebhookSignature(
   if (!eventsSecret?.trim()) {
     return false;
   }
-  if (!event?.signature?.checksum || !Array.isArray(event.signature.properties)) {
+  if (
+    !event?.signature?.checksum ||
+    !Array.isArray(event.signature.properties)
+  ) {
     return false;
   }
 
