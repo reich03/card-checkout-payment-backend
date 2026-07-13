@@ -24,7 +24,7 @@ export function createLambdaRuntime(
   const transactionsTable = env.DYNAMODB_TABLE_TRANSACTIONS ?? 'Transactions';
   const eventsSecret = env.PAYMENT_API_EVENTS_KEY ?? '';
 
-  const client = createDynamoDocumentClient(env.AWS_REGION ?? 'us-east-1');
+  const client = createDynamoDocumentClient(env.AWS_REGION ?? 'us-east-2');
   const transactionRepository = new DynamoTransactionRepository(
     client,
     transactionsTable,
