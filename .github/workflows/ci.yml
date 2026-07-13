@@ -39,8 +39,14 @@ jobs:
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2.pem
+          # Preserve real newlines; also accept secrets pasted with literal \n
+          printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" | sed 's/\r$//' > ~/.ssh/ec2.pem
+          if grep -q '\\n' ~/.ssh/ec2.pem; then
+            sed -i 's/\\n/\n/g' ~/.ssh/ec2.pem
+          fi
           chmod 600 ~/.ssh/ec2.pem
+          # Fail early with a clear message if the key is still invalid
+          ssh-keygen -y -f ~/.ssh/ec2.pem >/dev/null
           ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Rsync backend (keep remote .env)
