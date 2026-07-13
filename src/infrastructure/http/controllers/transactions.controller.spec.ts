@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { TransactionNotFoundError } from '../../../application/errors/application.errors';
 import { CreateTransactionUseCase } from '../../../application/use-cases/create-transaction.use-case';
+import { GetTransactionReceiptUseCase } from '../../../application/use-cases/get-transaction-receipt.use-case';
 import { GetTransactionUseCase } from '../../../application/use-cases/get-transaction.use-case';
 import {
   Transaction,
@@ -15,6 +16,7 @@ describe('TransactionsController (integration)', () => {
   let app: INestApplication;
   const createTransactionUseCase = { execute: jest.fn() };
   const getTransactionUseCase = { execute: jest.fn() };
+  const getTransactionReceiptUseCase = { execute: jest.fn() };
 
   const validBody = {
     products: [{ productId: 'prod-1', quantity: 1 }],
@@ -41,6 +43,10 @@ describe('TransactionsController (integration)', () => {
           useValue: createTransactionUseCase,
         },
         { provide: GetTransactionUseCase, useValue: getTransactionUseCase },
+        {
+          provide: GetTransactionReceiptUseCase,
+          useValue: getTransactionReceiptUseCase,
+        },
       ],
     }).compile();
 
@@ -119,5 +125,60 @@ describe('TransactionsController (integration)', () => {
     await request(app.getHttpServer())
       .get('/api/transactions/missing')
       .expect(404);
+  });
+
+  it('GET /api/transactions/:id/receipt returns JSON receipt', async () => {
+    getTransactionReceiptUseCase.execute.mockResolvedValue({
+      receiptNumber: 'GP-ABCDEF12',
+      transactionId: 'tx-1',
+      paymentRef: 'pay_1',
+      status: TransactionStatus.APPROVED,
+      issuedAt: '2026-07-13T12:00:00.000Z',
+      currency: 'COP',
+      amount: 90000,
+      cardLast4: '4242',
+      merchant: { name: 'GreenPay', tagline: 'Recibo de compra' },
+      items: [
+        {
+          productId: 'prod-1',
+          name: 'Café',
+          quantity: 1,
+          unitPrice: 90000,
+          lineTotal: 90000,
+        },
+      ],
+      html: '<html>ok</html>',
+    });
+
+    const response = await request(app.getHttpServer())
+      .get('/api/transactions/tx-1/receipt')
+      .expect(200);
+
+    expect(response.body.receiptNumber).toBe('GP-ABCDEF12');
+    expect(response.body.htmlUrl).toContain('/receipt?format=html');
+    expect(response.body.html).toBeUndefined();
+  });
+
+  it('GET /api/transactions/:id/receipt?format=html returns HTML', async () => {
+    getTransactionReceiptUseCase.execute.mockResolvedValue({
+      receiptNumber: 'GP-ABCDEF12',
+      transactionId: 'tx-1',
+      paymentRef: 'pay_1',
+      status: TransactionStatus.APPROVED,
+      issuedAt: '2026-07-13T12:00:00.000Z',
+      currency: 'COP',
+      amount: 90000,
+      cardLast4: '4242',
+      merchant: { name: 'GreenPay', tagline: 'Recibo de compra' },
+      items: [],
+      html: '<html><body>recibo</body></html>',
+    });
+
+    const response = await request(app.getHttpServer())
+      .get('/api/transactions/tx-1/receipt?format=html')
+      .expect(200);
+
+    expect(response.text).toContain('recibo');
+    expect(response.headers['content-type']).toMatch(/text\/html/);
   });
 });
