@@ -1,7 +1,7 @@
 import { createHash } from 'crypto';
 import { TransactionStatus } from '../../src/domain/entities/transaction.entity';
-import { handler as reconcileHandler } from './reconcile.handler';
-import { handler as webhookHandler } from './webhook.handler';
+import { runReconcile } from './reconcile.handler';
+import { runWebhook } from './webhook.handler';
 import type { LambdaRuntime } from '../runtime';
 import type { WompiWebhookEvent } from '../../src/infrastructure/payment/webhook-signature';
 
@@ -56,7 +56,7 @@ describe('lambda handlers', () => {
       },
     } as unknown as LambdaRuntime;
 
-    const result = await reconcileHandler({}, runtime);
+    const result = await runReconcile(runtime);
     expect(result).toEqual({
       ok: true,
       scanned: 2,
@@ -77,7 +77,7 @@ describe('lambda handlers', () => {
       reconcilePending: { execute: jest.fn() },
     } as unknown as LambdaRuntime;
 
-    const response = await webhookHandler(
+    const response = await runWebhook(
       {
         body: JSON.stringify({
           ...buildSignedEvent(),
@@ -115,7 +115,7 @@ describe('lambda handlers', () => {
       reconcilePending: { execute: jest.fn() },
     } as unknown as LambdaRuntime;
 
-    const response = await webhookHandler(
+    const response = await runWebhook(
       {
         body: JSON.stringify(signed),
         headers: { 'X-Event-Checksum': signed.signature.checksum },

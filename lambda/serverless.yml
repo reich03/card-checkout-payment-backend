@@ -17,7 +17,7 @@ provider:
     PAYMENT_API_PRIVATE_KEY: ${env:PAYMENT_API_PRIVATE_KEY}
     PAYMENT_API_INTEGRITY_KEY: ${env:PAYMENT_API_INTEGRITY_KEY}
     PAYMENT_API_EVENTS_KEY: ${env:PAYMENT_API_EVENTS_KEY}
-    RECONCILE_OLDER_THAN_MINUTES: ${env:RECONCILE_OLDER_THAN_MINUTES, '3'}
+    RECONCILE_OLDER_THAN_MINUTES: ${env:RECONCILE_OLDER_THAN_MINUTES, '0'}
   iam:
     role:
       statements:
@@ -41,12 +41,13 @@ package:
 functions:
   reconcile:
     handler: dist/reconcile.handler
-    description: Reconcile PENDING transactions older than 3 minutes
+    timeout: 60
+    description: Reconcile PENDING txs (~every 30s via 1m schedule + mid-minute pass)
     events:
       - schedule:
-          rate: rate(5 minutes)
+          rate: rate(1 minute)
           enabled: true
-          description: GreenPay pending transaction reconciler
+          description: GreenPay pending transaction reconciler (2 passes / minute)
 
   webhook:
     handler: dist/webhook.handler

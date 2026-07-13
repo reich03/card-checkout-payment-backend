@@ -102,6 +102,21 @@ export class PaymentGatewayAdapter implements IPaymentGateway {
       this.config.privateKey,
     );
 
+    console.log(
+      JSON.stringify({
+        message: 'wompi.get_transaction',
+        paymentRef,
+        wompi: {
+          id: response.data?.id,
+          status: response.data?.status,
+          status_message: response.data?.status_message ?? null,
+          amount_in_cents: response.data?.amount_in_cents,
+          currency: response.data?.currency,
+          reference: response.data?.reference,
+        },
+      }),
+    );
+
     return this.mapTransaction(response, 'Payment transaction lookup failed');
   }
 

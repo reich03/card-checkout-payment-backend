@@ -1,11 +1,15 @@
+import { Inject, Injectable } from '@nestjs/common';
 import {
   Transaction,
   TransactionProduct,
   TransactionStatus,
 } from '../../domain/entities/transaction.entity';
 import type { IPaymentGateway } from '../../domain/ports/payment.gateway.port';
+import { PAYMENT_GATEWAY } from '../../domain/ports/payment.gateway.port';
 import type { IProductRepository } from '../../domain/ports/product.repository.port';
+import { PRODUCT_REPOSITORY } from '../../domain/ports/product.repository.port';
 import type { ITransactionRepository } from '../../domain/ports/transaction.repository.port';
+import { TRANSACTION_REPOSITORY } from '../../domain/ports/transaction.repository.port';
 import {
   InsufficientStockError,
   ProductNotFoundError,
@@ -26,10 +30,14 @@ export interface ResolveTransactionResult {
  * Applies a terminal (or still-pending) payment status to a local transaction.
  * Used by the scheduled reconciler and the payment webhook Lambda.
  */
+@Injectable()
 export class ResolveTransactionUseCase {
   constructor(
+    @Inject(TRANSACTION_REPOSITORY)
     private readonly transactionRepository: ITransactionRepository,
+    @Inject(PRODUCT_REPOSITORY)
     private readonly productRepository: IProductRepository,
+    @Inject(PAYMENT_GATEWAY)
     private readonly paymentGateway: IPaymentGateway,
   ) {}
 

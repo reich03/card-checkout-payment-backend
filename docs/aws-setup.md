@@ -47,7 +47,8 @@ cd lambda
 npx serverless@3 deploy --stage dev --region us-east-2
 ```
 
-Functions: `greenpay-reconciler-dev-reconcile` (EventBridge every 5 min), `greenpay-reconciler-dev-webhook`.
+Functions: `greenpay-reconciler-dev-reconcile` (EventBridge every **1 min**, PENDING older than **1 min**), `greenpay-reconciler-dev-webhook`.
+
 
 Smoke test webhook: invalid signature → `{"ok":false,"error":"Invalid webhook signature"}` means the endpoint is live.
 

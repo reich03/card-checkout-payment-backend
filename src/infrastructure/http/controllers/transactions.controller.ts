@@ -27,7 +27,9 @@ export class TransactionsController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get transaction status by id' })
+  @ApiOperation({
+    summary: 'Get transaction status by id (refreshes PENDING from Wompi)',
+  })
   @ApiOkResponse({ description: 'Transaction details' })
   async findOne(@Param('id') id: string) {
     const transaction = await this.getTransactionUseCase.execute(id);

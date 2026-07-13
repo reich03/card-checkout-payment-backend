@@ -20,9 +20,7 @@ export interface ApiGatewayProxyResult {
   body: string;
 }
 
-type WompiMappedStatus = TransactionStatus;
-
-function mapWompiStatus(status: string | undefined): WompiMappedStatus {
+function mapWompiStatus(status: string | undefined): TransactionStatus {
   switch ((status ?? '').toUpperCase()) {
     case 'APPROVED':
       return TransactionStatus.APPROVED;
@@ -69,10 +67,7 @@ function json(statusCode: number, payload: unknown): ApiGatewayProxyResult {
   };
 }
 
-/**
- * API Gateway HTTP handler — Wompi `transaction.updated` webhook.
- */
-export async function handler(
+export async function runWebhook(
   event: ApiGatewayProxyEvent,
   runtime: LambdaRuntime = createLambdaRuntime(),
 ): Promise<ApiGatewayProxyResult> {
@@ -91,6 +86,12 @@ export async function handler(
   }
 
   if (payload.event !== 'transaction.updated') {
+    console.log(
+      JSON.stringify({
+        message: 'wompi.webhook.ignored',
+        event: payload.event,
+      }),
+    );
     return json(200, { ok: true, ignored: true, event: payload.event });
   }
 
@@ -99,8 +100,26 @@ export async function handler(
         id?: string;
         reference?: string;
         status?: string;
+        status_message?: string;
+        amount_in_cents?: number;
+        currency?: string;
       }
     | undefined;
+
+  console.log(
+    JSON.stringify({
+      message: 'wompi.webhook.received',
+      event: payload.event,
+      wompi: {
+        id: txData?.id,
+        reference: txData?.reference,
+        status: txData?.status,
+        status_message: txData?.status_message ?? null,
+        amount_in_cents: txData?.amount_in_cents,
+        currency: txData?.currency,
+      },
+    }),
+  );
 
   if (!txData?.reference || !txData.id) {
     return json(400, {
@@ -140,4 +159,14 @@ export async function handler(
       error: error instanceof Error ? error.message : 'Resolve failed',
     });
   }
+}
+
+/**
+ * API Gateway HTTP handler — Wompi `transaction.updated` webhook.
+ * NOTE: AWS invokes handler(event, context). Runtime must not be arg #2.
+ */
+export async function handler(
+  event: ApiGatewayProxyEvent,
+): Promise<ApiGatewayProxyResult> {
+  return runWebhook(event, createLambdaRuntime());
 }
