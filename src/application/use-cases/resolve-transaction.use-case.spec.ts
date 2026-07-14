@@ -3,6 +3,10 @@ import {
   TransactionStatus,
 } from '../../domain/entities/transaction.entity';
 import { Product } from '../../domain/entities/product.entity';
+import {
+  InsufficientStockError,
+  ProductNotFoundError,
+} from '../errors/application.errors';
 import { ResolveTransactionUseCase } from './resolve-transaction.use-case';
 
 describe('ResolveTransactionUseCase', () => {
@@ -114,5 +118,126 @@ describe('ResolveTransactionUseCase', () => {
     const result = await useCase.executeFromGateway(baseTx());
     expect(result.changed).toBe(true);
     expect(result.transaction.status).toBe(TransactionStatus.APPROVED);
+  });
+
+  it('stores a newly assigned payment reference while still pending', async () => {
+    const { useCase, transactionRepository } = createMocks();
+    const tx = new Transaction(
+      'tx-1',
+      TransactionStatus.PENDING,
+      90000,
+      'COP',
+      null,
+      [{ productId: 'prod-1', quantity: 1, unitPrice: 90000 }],
+      '4242',
+      new Date('2026-01-01T00:00:00.000Z'),
+      new Date('2026-01-01T00:00:00.000Z'),
+    );
+
+    const result = await useCase.execute({
+      transaction: tx,
+      status: TransactionStatus.PENDING,
+      paymentRef: 'pay_new',
+    });
+
+    expect(result.changed).toBe(true);
+    expect(result.transaction.paymentRef).toBe('pay_new');
+    expect(transactionRepository.update).toHaveBeenCalled();
+  });
+
+  it('is a no-op when still pending and paymentRef is already set', async () => {
+    const { useCase, transactionRepository } = createMocks();
+
+    const result = await useCase.execute({
+      transaction: baseTx(),
+      status: TransactionStatus.PENDING,
+      paymentRef: 'pay_new',
+    });
+
+    expect(result.changed).toBe(false);
+    expect(transactionRepository.update).not.toHaveBeenCalled();
+  });
+
+  it('is a no-op when still pending and no paymentRef is provided', async () => {
+    const { useCase, transactionRepository } = createMocks();
+    const tx = new Transaction(
+      'tx-1',
+      TransactionStatus.PENDING,
+      90000,
+      'COP',
+      null,
+      [{ productId: 'prod-1', quantity: 1, unitPrice: 90000 }],
+      '4242',
+      new Date('2026-01-01T00:00:00.000Z'),
+      new Date('2026-01-01T00:00:00.000Z'),
+    );
+
+    const result = await useCase.execute({
+      transaction: tx,
+      status: TransactionStatus.PENDING,
+      paymentRef: '',
+    });
+
+    expect(result.changed).toBe(false);
+    expect(transactionRepository.update).not.toHaveBeenCalled();
+  });
+
+  it('executeFromGateway skips terminal transactions without calling the gateway', async () => {
+    const { useCase, paymentGateway } = createMocks();
+    const approved = baseTx();
+    approved.approve('pay_abc');
+
+    const result = await useCase.executeFromGateway(approved);
+
+    expect(result.changed).toBe(false);
+    expect(paymentGateway.getTransaction).not.toHaveBeenCalled();
+  });
+
+  it('executeFromGateway skips pending transactions without a paymentRef', async () => {
+    const { useCase, paymentGateway } = createMocks();
+    const tx = new Transaction(
+      'tx-1',
+      TransactionStatus.PENDING,
+      90000,
+      'COP',
+      null,
+      [{ productId: 'prod-1', quantity: 1, unitPrice: 90000 }],
+      '4242',
+      new Date('2026-01-01T00:00:00.000Z'),
+      new Date('2026-01-01T00:00:00.000Z'),
+    );
+
+    const result = await useCase.executeFromGateway(tx);
+
+    expect(result.changed).toBe(false);
+    expect(paymentGateway.getTransaction).not.toHaveBeenCalled();
+  });
+
+  it('throws ProductNotFoundError when decrementing stock for a missing product', async () => {
+    const { useCase, productRepository } = createMocks();
+    productRepository.findById.mockResolvedValue(null);
+
+    await expect(
+      useCase.execute({
+        transaction: baseTx(),
+        status: TransactionStatus.APPROVED,
+        paymentRef: 'pay_abc',
+      }),
+    ).rejects.toBeInstanceOf(ProductNotFoundError);
+  });
+
+  it('throws InsufficientStockError when stock is too low to approve', async () => {
+    const { useCase, productRepository } = createMocks();
+    productRepository.findById.mockResolvedValue(
+      new Product('prod-1', 'Kit', 'desc', 90000, 0, 'https://x'),
+    );
+
+    await expect(
+      useCase.execute({
+        transaction: baseTx(),
+        status: TransactionStatus.APPROVED,
+        paymentRef: 'pay_abc',
+      }),
+    ).rejects.toBeInstanceOf(InsufficientStockError);
   });
 });

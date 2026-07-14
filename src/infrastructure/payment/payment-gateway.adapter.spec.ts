@@ -196,4 +196,165 @@ describe('PaymentGatewayAdapter', () => {
       'Payment API timeout after 5000ms',
     );
   });
+
+  it('throws on unexpected network errors', async () => {
+    const fetchFn = jest
+      .fn()
+      .mockRejectedValue(new Error('ECONNRESET'));
+
+    const adapter = createAdapter(fetchFn);
+
+    await expect(adapter.getTransaction('pay_1')).rejects.toThrow(
+      'ECONNRESET',
+    );
+  });
+
+  it('throws on non-Error rejections', async () => {
+    const fetchFn = jest.fn().mockRejectedValue('boom');
+
+    const adapter = createAdapter(fetchFn);
+
+    await expect(adapter.getTransaction('pay_1')).rejects.toThrow(
+      'Unknown payment API error',
+    );
+  });
+
+  it('throws when tokenization succeeds without returning a token', async () => {
+    const fetchFn = jest
+      .fn()
+      .mockResolvedValue(jsonResponse({ status: 'CREATED', data: {} }));
+
+    const adapter = createAdapter(fetchFn);
+
+    await expect(adapter.tokenizeCard(card)).rejects.toThrow(
+      'Card tokenization failed',
+    );
+  });
+
+  it('throws when acceptance tokens are missing from the merchant response', async () => {
+    const fetchFn = jest
+      .fn()
+      .mockResolvedValue(jsonResponse({ data: {} }));
+
+    const adapter = createAdapter(fetchFn);
+
+    await expect(
+      adapter.createTransaction({
+        amountInCents: 200000,
+        currency: 'COP',
+        customerEmail: 'jane@example.com',
+        paymentToken: 'tok_test_123',
+        installments: 1,
+        reference: 'tx-1',
+      }),
+    ).rejects.toThrow('Failed to fetch acceptance tokens');
+  });
+
+  it('throws when the transaction response is missing id or status', async () => {
+    const fetchFn = jest
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          data: {
+            presigned_acceptance: { acceptance_token: 'acceptance-token' },
+            presigned_personal_data_auth: {
+              acceptance_token: 'personal-auth-token',
+            },
+          },
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ data: {} }));
+
+    const adapter = createAdapter(fetchFn);
+
+    await expect(
+      adapter.createTransaction({
+        amountInCents: 200000,
+        currency: 'COP',
+        customerEmail: 'jane@example.com',
+        paymentToken: 'tok_test_123',
+        installments: 1,
+        reference: 'tx-1',
+      }),
+    ).rejects.toThrow('Payment transaction creation failed');
+  });
+
+  it('maps pending/unknown gateway statuses to PENDING', async () => {
+    const fetchFn = jest.fn().mockResolvedValue(
+      jsonResponse({
+        data: {
+          id: 'pay_pending',
+          status: 'PENDING_APPROVAL',
+          amount_in_cents: 200000,
+          currency: 'COP',
+          reference: 'tx-3',
+        },
+      }),
+    );
+
+    const adapter = createAdapter(fetchFn);
+    const result = await adapter.getTransaction('pay_pending');
+
+    expect(result.status).toBe(TransactionStatus.PENDING);
+  });
+
+  it('falls back to a generic message when the error body has no reason or messages', async () => {
+    const fetchFn = jest.fn().mockResolvedValue(jsonResponse({}, 500));
+
+    const adapter = createAdapter(fetchFn);
+
+    await expect(adapter.getTransaction('pay_1')).rejects.toThrow(
+      'Payment API error (500)',
+    );
+  });
+
+  it('joins flattened validation messages from the error body', async () => {
+    const fetchFn = jest.fn().mockResolvedValue(
+      jsonResponse(
+        {
+          error: {
+            messages: {
+              amount_in_cents: ['must be a number'],
+              currency: ['is required'],
+            },
+          },
+        },
+        422,
+      ),
+    );
+
+    const adapter = createAdapter(fetchFn);
+
+    await expect(adapter.getTransaction('pay_1')).rejects.toThrow(
+      'must be a number; is required',
+    );
+  });
+
+  it('treats a non-JSON response body as an empty payload', async () => {
+    const fetchFn = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 502,
+      text: async () => 'not json at all',
+    } as Response);
+
+    const adapter = createAdapter(fetchFn);
+
+    await expect(adapter.getTransaction('pay_1')).rejects.toThrow(
+      'not json at all',
+    );
+  });
+
+  it('treats an empty response body as an empty JSON object', async () => {
+    const fetchFn = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => '',
+    } as Response);
+
+    const adapter = createAdapter(fetchFn);
+
+    await expect(adapter.getTransaction('pay_1')).rejects.toThrow(
+      'Payment transaction lookup failed',
+    );
+  });
 });

@@ -80,7 +80,10 @@
       "src/**/*.(t|j)s",
       "lambda/**/*.(t|j)s",
       "!lambda/esbuild.mjs",
-      "!lambda/dist/**"
+      "!lambda/dist/**",
+      "!src/main.ts",
+      "!src/**/*.module.ts",
+      "!src/**/index.ts"
     ],
     "coverageDirectory": "./coverage",
     "testEnvironment": "node"

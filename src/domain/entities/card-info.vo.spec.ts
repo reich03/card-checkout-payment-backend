@@ -52,6 +52,20 @@ describe('CardInfo', () => {
     ).toThrow('Card number must be between 13 and 19 digits');
   });
 
+  it('rejects missing holder name', () => {
+    expect(
+      () =>
+        new CardInfo(
+          validProps.number,
+          '',
+          validProps.expMonth,
+          validProps.expYear,
+          validProps.cvv,
+          validProps.installments,
+        ),
+    ).toThrow('Card holder name is required');
+  });
+
   it('rejects invalid expiration month', () => {
     expect(
       () =>
@@ -64,6 +78,20 @@ describe('CardInfo', () => {
           validProps.installments,
         ),
     ).toThrow('Expiration month must be between 01 and 12');
+  });
+
+  it('rejects invalid expiration year', () => {
+    expect(
+      () =>
+        new CardInfo(
+          validProps.number,
+          validProps.holderName,
+          validProps.expMonth,
+          '2030',
+          validProps.cvv,
+          validProps.installments,
+        ),
+    ).toThrow('Expiration year must be 2 digits');
   });
 
   it('rejects invalid CVV', () => {

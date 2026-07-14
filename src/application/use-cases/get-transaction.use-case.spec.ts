@@ -79,6 +79,36 @@ describe('GetTransactionUseCase', () => {
     expect(result.status).toBe(approved.status);
   });
 
+  it('returns the local transaction when the gateway refresh fails', async () => {
+    const pending = Transaction.create({
+      id: 'tx-3',
+      amount: 100000,
+      currency: 'COP',
+      products: [{ productId: 'prod-1', quantity: 1, unitPrice: 100000 }],
+      cardLast4: '4242',
+    });
+    pending.paymentRef = 'pay_1';
+
+    (resolveTransaction.executeFromGateway as jest.Mock).mockRejectedValue(
+      new Error('Wompi unreachable'),
+    );
+
+    const transactionRepository = {
+      save: jest.fn(),
+      findById: jest.fn().mockResolvedValue(pending),
+      update: jest.fn(),
+      findPendingOlderThan: jest.fn(),
+    };
+
+    const useCase = new GetTransactionUseCase(
+      transactionRepository,
+      resolveTransaction,
+    );
+    const result = await useCase.execute('tx-3');
+
+    expect(result).toBe(pending);
+  });
+
   it('throws when transaction does not exist', async () => {
     const transactionRepository = {
       save: jest.fn(),
