@@ -85,12 +85,20 @@ docker-compose up
 npm run seed:products
 ```
 
+## AWS architecture
+
+Diagrama de despliegue en **AWS us-east-2** (EC2 NestJS, DynamoDB, Lambda reconciler/webhook, API Gateway, EventBridge, CloudWatch/SNS, Wompi sandbox, GitHub Actions):
+
+<img src="./docs/aws-architecture.png" alt="GreenPay AWS architecture" width="900" />
+
+Detalle operativo: [`docs/aws-setup.md`](./docs/aws-setup.md).
+
 ## AWS deployment
 
 Live API (Ohio): see [`docs/aws-setup.md`](./docs/aws-setup.md) for EC2, DynamoDB, Lambda, and GitHub Actions secrets.
 
 ```bash
-# Manual redeploy from your Mac
+# Manual redeploy 
 rsync -avz --exclude node_modules --exclude dist --exclude coverage \
   -e "ssh -i ~/Downloads/greenpay-ec2.pem" \
   ./ ec2-user@18.224.46.220:~/backend/
@@ -98,17 +106,41 @@ ssh -i ~/Downloads/greenpay-ec2.pem ec2-user@18.224.46.220 \
   'cd ~/backend && docker compose up -d --build'
 ```
 
-## Test Coverage
+## Unit tests (Jest) — mandatory >80% coverage
 
-> Coverage results will be added here after implementation.
+Unit tests run with **Jest**. Business logic is covered via unit specs (entities, use cases, adapters, Lambda handlers, HTTP filter) with mocked ports/AWS/HTTP clients.
+
+```bash
+# Run all unit tests
+npm test
+
+# Run with coverage report
+npm run test:cov
+```
+
+### Coverage results
+
+Generated with `npm run test:cov` (Jest `--coverage`). **Requirement met: >80%.**
+
+| Metric | Coverage |
+|---|---|
+| Statements | **99.27%** (682/687) |
+| Branches | **86.28%** (283/328) |
+| Functions | **99.14%** (116/117) |
+| Lines | **99.39%** (653/657) |
 
 ```
------------------------------|---------|----------|---------|---------|
-File                         | % Stmts | % Branch | % Funcs | % Lines |
------------------------------|---------|----------|---------|---------|
-All files                    |   XX.XX |    XX.XX |   XX.XX |   XX.XX |
------------------------------|---------|----------|---------|---------|
+=============================== Coverage summary ===============================
+Statements   : 99.27% ( 682/687 )
+Branches     : 86.28% ( 283/328 )
+Functions    : 99.14% ( 116/117 )
+Lines        : 99.39% ( 653/657 )
+================================================================================
 ```
+
+- **Test suites:** 26 passed  
+- **Tests:** 146 passed  
+- Coverage excludes Nest wiring barrels (`index.ts`), `*.module.ts`, and `main.ts` (DI bootstrap); all domain/application/infrastructure logic is included.
 
 ## Environment Variables
 

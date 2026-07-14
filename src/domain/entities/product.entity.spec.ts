@@ -38,6 +38,20 @@ describe('Product', () => {
     ).toThrow('Product id is required');
   });
 
+  it('rejects missing name', () => {
+    expect(
+      () =>
+        new Product(
+          validProps.id,
+          '',
+          validProps.description,
+          validProps.price,
+          validProps.stock,
+          validProps.imageUrl,
+        ),
+    ).toThrow('Product name is required');
+  });
+
   it('rejects negative price', () => {
     expect(
       () =>
@@ -78,6 +92,21 @@ describe('Product', () => {
 
     expect(product.hasStock(10)).toBe(true);
     expect(product.hasStock(11)).toBe(false);
+  });
+
+  it('rejects checking stock for a non-positive quantity', () => {
+    const product = new Product(
+      validProps.id,
+      validProps.name,
+      validProps.description,
+      validProps.price,
+      validProps.stock,
+      validProps.imageUrl,
+    );
+
+    expect(() => product.hasStock(0)).toThrow(
+      'Quantity must be greater than zero',
+    );
   });
 
   it('decrements stock when available', () => {
@@ -121,5 +150,20 @@ describe('Product', () => {
     product.incrementStock(2);
 
     expect(product.stock).toBe(12);
+  });
+
+  it('rejects incrementing stock by a non-positive quantity', () => {
+    const product = new Product(
+      validProps.id,
+      validProps.name,
+      validProps.description,
+      validProps.price,
+      validProps.stock,
+      validProps.imageUrl,
+    );
+
+    expect(() => product.incrementStock(0)).toThrow(
+      'Quantity must be greater than zero',
+    );
   });
 });

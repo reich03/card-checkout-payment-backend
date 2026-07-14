@@ -17,6 +17,23 @@ describe('Transaction', () => {
     expect(transaction.isPending()).toBe(true);
   });
 
+  it('rejects missing id', () => {
+    expect(
+      () =>
+        new Transaction(
+          '',
+          TransactionStatus.PENDING,
+          100000,
+          'COP',
+          null,
+          products,
+          '4242',
+          new Date(),
+          new Date(),
+        ),
+    ).toThrow('Transaction id is required');
+  });
+
   it('rejects zero or negative amount', () => {
     expect(
       () =>
@@ -34,6 +51,23 @@ describe('Transaction', () => {
     ).toThrow('Transaction amount must be greater than zero');
   });
 
+  it('rejects missing currency', () => {
+    expect(
+      () =>
+        new Transaction(
+          'tx-1',
+          TransactionStatus.PENDING,
+          100000,
+          '',
+          null,
+          products,
+          '4242',
+          new Date(),
+          new Date(),
+        ),
+    ).toThrow('Transaction currency is required');
+  });
+
   it('rejects empty products', () => {
     expect(
       () =>
@@ -49,6 +83,57 @@ describe('Transaction', () => {
           new Date(),
         ),
     ).toThrow('Transaction must include at least one product');
+  });
+
+  it('rejects a line item with missing product id', () => {
+    expect(
+      () =>
+        new Transaction(
+          'tx-1',
+          TransactionStatus.PENDING,
+          100000,
+          'COP',
+          null,
+          [{ productId: '', quantity: 1, unitPrice: 1000 }],
+          '4242',
+          new Date(),
+          new Date(),
+        ),
+    ).toThrow('Transaction product id is required');
+  });
+
+  it('rejects a line item with non-positive quantity', () => {
+    expect(
+      () =>
+        new Transaction(
+          'tx-1',
+          TransactionStatus.PENDING,
+          100000,
+          'COP',
+          null,
+          [{ productId: 'prod-1', quantity: 0, unitPrice: 1000 }],
+          '4242',
+          new Date(),
+          new Date(),
+        ),
+    ).toThrow('Transaction product quantity must be greater than zero');
+  });
+
+  it('rejects a line item with negative unit price', () => {
+    expect(
+      () =>
+        new Transaction(
+          'tx-1',
+          TransactionStatus.PENDING,
+          100000,
+          'COP',
+          null,
+          [{ productId: 'prod-1', quantity: 1, unitPrice: -1 }],
+          '4242',
+          new Date(),
+          new Date(),
+        ),
+    ).toThrow('Transaction product unit price cannot be negative');
   });
 
   it('rejects invalid card last4', () => {
